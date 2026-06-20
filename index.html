@@ -1514,60 +1514,59 @@
     heroVid.style.display = 'block';
     heroVid.autoplay = true;
     heroVid.play().catch(() => {});
-    return;
-  }
+  } else {
+    // ── Desktop path: canvas frame extraction ──
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
-  // ── Desktop path: canvas frame extraction ──
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-
-  function setProgress(pct, label) {
-    lf.style.width = pct + '%';
-    lp.textContent = Math.floor(pct) + '%';
-    if (label) ls.textContent = label;
-  }
-
-  const TARGET_FPS = 20;
-
-  async function extractFrames() {
-    setProgress(0, 'Loading video…');
-
-    const vid = document.createElement('video');
-    vid.src = './3dvideo/3Dvideo.mp4';
-    vid.muted = true;
-    vid.preload = 'auto';
-    vid.playsInline = true;
-
-    await new Promise((res, rej) => {
-      vid.addEventListener('loadedmetadata', res, { once: true });
-      vid.addEventListener('error', rej, { once: true });
-      vid.load();
-    });
-
-    frameW = vid.videoWidth;
-    frameH = vid.videoHeight;
-    wrap.style.height = (window.innerHeight + Math.max(window.innerHeight * 5, vid.duration * 350)) + 'px';
-
-    const off = document.createElement('canvas');
-    off.width = frameW; off.height = frameH;
-    const octx = off.getContext('2d');
-    const total = Math.round(vid.duration * TARGET_FPS);
-
-    setProgress(0, 'Extracting frames…');
-    for (let i = 0; i <= total; i++) {
-      vid.currentTime = (i / total) * vid.duration;
-      await new Promise(r => vid.addEventListener('seeked', r, { once: true }));
-      octx.drawImage(vid, 0, 0);
-      frames.push(await createImageBitmap(off));
-      if (i === 0) drawFrame(0);
-      setProgress(Math.round((i / total) * 100));
+    function setProgress(pct, label) {
+      lf.style.width = pct + '%';
+      lp.textContent = Math.floor(pct) + '%';
+      if (label) ls.textContent = label;
     }
 
-    setProgress(100, 'Ready');
-    setTimeout(() => loader.classList.add('out'), 400);
-  }
+    const TARGET_FPS = 20;
 
-  extractFrames().catch(() => loader.classList.add('out'));
+    async function extractFrames() {
+      setProgress(0, 'Loading video…');
+
+      const vid = document.createElement('video');
+      vid.src = './3dvideo/3Dvideo.mp4';
+      vid.muted = true;
+      vid.preload = 'auto';
+      vid.playsInline = true;
+
+      await new Promise((res, rej) => {
+        vid.addEventListener('loadedmetadata', res, { once: true });
+        vid.addEventListener('error', rej, { once: true });
+        vid.load();
+      });
+
+      frameW = vid.videoWidth;
+      frameH = vid.videoHeight;
+      wrap.style.height = (window.innerHeight + Math.max(window.innerHeight * 5, vid.duration * 350)) + 'px';
+
+      const off = document.createElement('canvas');
+      off.width = frameW; off.height = frameH;
+      const octx = off.getContext('2d');
+      const total = Math.round(vid.duration * TARGET_FPS);
+
+      setProgress(0, 'Extracting frames…');
+      for (let i = 0; i <= total; i++) {
+        vid.currentTime = (i / total) * vid.duration;
+        await new Promise(r => vid.addEventListener('seeked', r, { once: true }));
+        octx.drawImage(vid, 0, 0);
+        frames.push(await createImageBitmap(off));
+        if (i === 0) drawFrame(0);
+        setProgress(Math.round((i / total) * 100));
+      }
+
+      setProgress(100, 'Ready');
+      setTimeout(() => loader.classList.add('out'), 400);
+    }
+
+    extractFrames().catch(() => loader.classList.add('out'));
+  }
 </script>
 </body>
 </html>
